@@ -28,6 +28,9 @@ This application is designed to run in a private subnet and receives authenticat
 ```
 pdf_image_analyzer_backend/
 ├── apps/
+│   ├── core/
+│   │   ├── management/
+│   │   └── middleware/
 │   ├── file_upload/
 │   │   ├── management/
 │   │   ├── migrations/
@@ -50,9 +53,21 @@ pdf_image_analyzer_backend/
 ├── manage.py
 ├── requirements.txt
 ├── Dockerfile
-├── Dockerfile.local
-└── docker-compose.yml
+├── docker-compose.yml (local development)
+├── docker-compose.prod.yml (production)
+└── pytest.ini
 ```
+
+## Celery Configuration
+
+The project uses **separate Celery workers per app** with dedicated queues:
+
+- **file_upload queue**: Handles file processing tasks
+- **jobs queue**: Handles job status checking and processing
+- **analytics queue**: Handles analytics event processing
+- **Celery Beat**: Scheduler for periodic tasks
+
+Each worker processes only tasks from its assigned queue, providing better isolation and scalability.
 
 ## Setup
 
@@ -94,18 +109,39 @@ pdf_image_analyzer_backend/
 
 ### Docker Development
 
-1. Create `.env` file from `.env.example`
-2. Run with docker-compose:
+1. Create `.env` file from `env.example`
+2. Run with docker-compose (local development):
    ```bash
    docker-compose up
+   # or
+   make docker-up
    ```
 
 This will start:
 - PostgreSQL with pgvector extension on port 5432
-- Redis on port 6379
+- Redis on port 6379 (Celery broker)
 - Django application on port 8000
-- Celery worker
-- Flower (Celery monitoring) on port 5555
+- **3 Celery workers** (one per app):
+  - `celery-file-upload` - handles file upload tasks
+  - `celery-jobs` - handles job processing tasks
+  - `celery-analytics` - handles analytics tasks
+- **Celery Beat** - scheduled task scheduler
+- **Flower** (Celery monitoring) on port 5555
+
+### Docker Production
+
+For production deployment:
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+# or
+make docker-prod-up
+```
+
+Production setup includes:
+- Gunicorn with 4 workers
+- Optimized Celery workers with concurrency settings
+- Automatic restarts
+- No volume mounts (code baked into image)
 
 ## API Endpoints
 

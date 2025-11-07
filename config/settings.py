@@ -173,6 +173,35 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+# Celery Task Queues - one per app
+CELERY_TASK_QUEUES = {
+    'default': {
+        'exchange': 'tasks',
+        'routing_key': 'default',
+    },
+    'file_upload': {
+        'exchange': 'tasks',
+        'routing_key': 'file_upload',
+    },
+    'jobs': {
+        'exchange': 'tasks',
+        'routing_key': 'jobs',
+    },
+    'analytics': {
+        'exchange': 'tasks',
+        'routing_key': 'analytics',
+    },
+}
+
+# Celery Beat Schedule (for periodic tasks)
+CELERY_BEAT_SCHEDULE = {
+    # Example: Run every 5 minutes
+    # 'periodic-task': {
+    #     'task': 'apps.jobs.tasks.check_job_status',
+    #     'schedule': 300.0,  # 5 minutes in seconds
+    # },
+}
+
 # Swagger/OpenAPI Settings for Orval
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {

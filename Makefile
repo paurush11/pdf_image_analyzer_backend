@@ -1,15 +1,17 @@
-.PHONY: help install migrate run test coverage clean docker-up docker-down
+.PHONY: help install migrate run test coverage clean docker-up docker-down docker-prod-up docker-prod-down
 
 help:
 	@echo "Available commands:"
-	@echo "  make install     - Install Python dependencies"
-	@echo "  make migrate     - Run database migrations"
-	@echo "  make run         - Run development server"
-	@echo "  make test        - Run tests"
-	@echo "  make coverage    - Run tests with coverage"
-	@echo "  make clean       - Clean Python cache files"
-	@echo "  make docker-up   - Start Docker services"
-	@echo "  make docker-down - Stop Docker services"
+	@echo "  make install         - Install Python dependencies"
+	@echo "  make migrate         - Run database migrations"
+	@echo "  make run             - Run development server"
+	@echo "  make test            - Run tests"
+	@echo "  make coverage        - Run tests with coverage"
+	@echo "  make clean           - Clean Python cache files"
+	@echo "  make docker-up       - Start Docker services (local)"
+	@echo "  make docker-down     - Stop Docker services (local)"
+	@echo "  make docker-prod-up  - Start Docker services (production)"
+	@echo "  make docker-prod-down - Stop Docker services (production)"
 
 install:
 	pip install -r requirements.txt
@@ -44,6 +46,15 @@ docker-down:
 
 docker-logs:
 	docker-compose logs -f
+
+docker-prod-up:
+	docker-compose -f docker-compose.prod.yml up -d
+
+docker-prod-down:
+	docker-compose -f docker-compose.prod.yml down
+
+docker-prod-logs:
+	docker-compose -f docker-compose.prod.yml logs -f
 
 shell:
 	python manage.py shell
