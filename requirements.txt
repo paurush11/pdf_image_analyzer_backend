@@ -1,0 +1,38 @@
+# Core Django
+Django==5.0.1
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+python-dotenv==1.0.0
+django-filter==23.5
+drf-yasg==1.21.7
+
+# Database
+psycopg2-binary==2.9.9
+pgvector==0.2.4
+
+# AWS
+boto3==1.34.34
+
+# Celery & Task Queue
+celery==5.3.4
+redis==5.0.1
+flower==2.0.1
+
+# Web Server
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# AI & Data
+openai==0.27.2
+numpy==2.2.3
+pandas==2.2.3
+
+# File/Image Handling
+Pillow==10.0.0
+
+# Testing & Coverage
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+coverage==7.3.4
+

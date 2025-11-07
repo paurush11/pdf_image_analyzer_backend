@@ -1,0 +1,23 @@
+[run]
+source = apps,config
+omit = 
+    */migrations/*
+    */venv/*
+    */env/*
+    */tests/*
+    */test_*
+    */__pycache__/*
+    manage.py
+    */settings.py
+    */celery.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+
