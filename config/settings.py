@@ -165,6 +165,7 @@ DATABASES = {
         "PORT": env("DB_PORT", "5432"),
     }
 }
+FRONTEND_REDIRECT_URL = env("FRONTEND_REDIRECT_URL", "")
 
 # ---------------------------
 # Password validation

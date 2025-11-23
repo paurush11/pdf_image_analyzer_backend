@@ -118,10 +118,20 @@ class AuthService:
 
         user_info = self._get_user_info(access_token)
 
-        # Upsert local user
+        # Raw fields from Cognito userInfo
         sub = user_info.get("sub")
         email = user_info.get("email") or ""
-        username = name = given_name = user_info.get("preferred_username")
+
+        preferred_username = user_info.get("preferred_username")
+        cognito_username = user_info.get("username")
+        given_name = user_info.get("given_name") or user_info.get("name")
+        name = (
+            user_info.get("name")
+            or given_name
+            or (email.split("@")[0] if email else None)
+        )
+
+        username = preferred_username or cognito_username or email
 
         user = None
         if sub and email:
@@ -170,12 +180,18 @@ class AuthService:
         except ValueError:
             raise ValueError(f"Invalid Cognito sub, not a UUID: {sub!r}")
 
+        # ✅ Make sure username is never null/empty
+        safe_username = (username or email or "").strip()
+        if not safe_username:
+            raise ValueError("Cannot upsert user without a username or email")
+
         defaults = {
             "email": email,
-            "username": username,
+            "username": safe_username,
             "updated_at": timezone.now(),
             "google_user": google_user,
-            **({"last_login": datetime.now()} if google_user else {}),
+            # use timezone-aware now
+            **({"last_login": timezone.now()} if google_user else {}),
         }
 
         if hasattr(User, "first_name") and given_name:
@@ -188,6 +204,3 @@ class AuthService:
             defaults=defaults,
         )
         return user
-
-
-auth_service = AuthService()

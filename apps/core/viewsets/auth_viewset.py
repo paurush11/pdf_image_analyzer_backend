@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 def _fmt_exp(exp: int | None):
     if exp is None:
         return None
-    return timezone.datetime.fromtimestamp(exp, tz=timezone.utc).isoformat()
+    return timezone.datetime.fromtimestamp(
+        exp, tz=timezone.get_current_timezone()
+    ).isoformat()
 
 
 def _remaining(exp: int | None) -> int | None:
@@ -327,6 +329,7 @@ class AuthViewSet(viewsets.ViewSet):
     def google_callback(self, request):
         """
         Handle Google OAuth callback via Cognito (code → tokens → user info).
+        NOTE: This is called by the frontend with ?code=..., not by Cognito directly.
         """
         code = request.query_params.get("code")
         error = request.query_params.get("error")
