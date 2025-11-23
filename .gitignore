@@ -58,6 +58,8 @@ htmlcov/
 # Celery
 celerybeat-schedule
 celerybeat.pid
+.env.django.dev
+.env.django.prod
 
 # Migration files (optional - uncomment if you want to ignore migrations)
 # */migrations/*.py

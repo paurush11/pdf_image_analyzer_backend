@@ -12,7 +12,7 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-pdf_analyzer}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,13 +31,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
+    command: ${WEB_CMD:-gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000}
     volumes:
       - .:/app
     ports:
       - "${WEB_PORT:-8000}:8000"
     env_file:
-      - .env
+      - .env.django.dev
     depends_on:
       db:
         condition: service_healthy
@@ -49,22 +50,32 @@ services:
       - DB_NAME=${DB_NAME:-pdf_analyzer}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      # Local dev uses Redis; in AWS you'll swap for SQS via env
       - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
-
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-1}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+  
   celery-file-upload:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A config worker -l info -Q file_upload -n file_upload@%h
+    command: celery -A config worker -l info -Q file_upload -n file_upload@%h -c ${CELERY_CONCURRENCY_UPLOADS:-8}
     volumes:
       - .:/app
     env_file:
-      - .env
+      - .env.django.dev
     depends_on:
-      - db
-      - redis
-      - web
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
     environment:
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
@@ -77,16 +88,18 @@ services:
   celery-jobs:
     build:
       context: .
-      dockerfile: Dockerfile
-    command: celery -A config worker -l info -Q jobs -n jobs@%h
+    command: celery -A config worker -l info -Q jobs -n jobs@%h -c ${CELERY_CONCURRENCY_JOBS:-8}
     volumes:
       - .:/app
     env_file:
-      - .env
+      - .env.django.dev
     depends_on:
-      - db
-      - redis
-      - web
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
     environment:
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
@@ -99,16 +112,18 @@ services:
   celery-analytics:
     build:
       context: .
-      dockerfile: Dockerfile
-    command: celery -A config worker -l info -Q analytics -n analytics@%h
+    command: celery -A config worker -l info -Q analytics -n analytics@%h -c ${CELERY_CONCURRENCY_ANALYTICS:-4}
     volumes:
       - .:/app
     env_file:
-      - .env
+      - .env.django.dev
     depends_on:
-      - db
-      - redis
-      - web
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
     environment:
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
@@ -121,18 +136,22 @@ services:
   celery-beat:
     build:
       context: .
-      dockerfile: Dockerfile
     command: celery -A config beat -l info
     volumes:
       - .:/app
     env_file:
-      - .env
+      - .env.django.dev
     depends_on:
-      - db
-      - redis
-      - celery-file-upload
-      - celery-jobs
-      - celery-analytics
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+      celery-file-upload:
+        condition: service_started
+      celery-jobs:
+        condition: service_started
+      celery-analytics:
+        condition: service_started
     environment:
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
@@ -145,19 +164,26 @@ services:
   flower:
     build:
       context: .
-      dockerfile: Dockerfile
-    command: celery -A config flower --port=${FLOWER_PORT:-5555}
+    command: >
+      celery -A config flower
+      --port=${FLOWER_PORT:-5555}
+      --inspect-timeout=${FLOWER_INSPECT_TIMEOUT:-10000}
+      --inspect-interval=${FLOWER_INSPECT_INTERVAL:-5000}
     volumes:
       - .:/app
     ports:
       - "${FLOWER_PORT:-5555}:5555"
     env_file:
-      - .env
+      - .env.django.dev
     depends_on:
-      - redis
-      - celery-file-upload
-      - celery-jobs
-      - celery-analytics
+      redis:
+        condition: service_healthy
+      celery-file-upload:
+        condition: service_started
+      celery-jobs:
+        condition: service_started
+      celery-analytics:
+        condition: service_started
     environment:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
