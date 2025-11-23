@@ -158,7 +158,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DB_NAME", "pdf_analyzer"),
+        "NAME": env("DB_NAME", "notebook_llm"),
         "USER": env("DB_USER", "postgres"),
         "PASSWORD": env("DB_PASSWORD", "postgres"),
         "HOST": env("DB_HOST", "localhost"),
@@ -209,6 +209,13 @@ AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", "")
 AWS_REGION = env("AWS_REGION", "us-east-1")
 AWS_COGNITO_USER_POOL_ID = env("AWS_COGNITO_USER_POOL_ID", "")
 AWS_COGNITO_CLIENT_ID = env("AWS_COGNITO_CLIENT_ID", "")
+AWS_COGNITO_CLIENT_SECRET = env("AWS_COGNITO_CLIENT_SECRET", "")
+AWS_COGNITO_DOMAIN = env(
+    "AWS_COGNITO_DOMAIN", ""
+)  # https://your-domain.auth.us-east-1.amazoncognito.com
+
+GOOGLE_REDIRECT_URI = env("GOOGLE_REDIRECT_URI", "")  # same as Node had
+INTERNAL_SYNC_SECRET = env("INTERNAL_SYNC_SECRET", "change-me")
 
 # ---------------------------
 # Celery (runtime-only here; queues/routes/beat live in config/celery.py)
@@ -276,6 +283,7 @@ if "test" in sys.argv or "pytest" in sys.modules:
     DATABASES["default"] = {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}
 
 AUTH_USER_MODEL = "core.User"
+APPEND_SLASH = False
 # ---------------------------
 # Logging
 # ---------------------------

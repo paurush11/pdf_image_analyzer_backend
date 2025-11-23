@@ -65,3 +65,4 @@ celerybeat.pid
 # */migrations/*.py
 # !*/migrations/__init__.py
 
+/postgres_data

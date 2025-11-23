@@ -11,7 +11,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-# ----- OpenAPI / Swagger -----
+SWAGGER_BASE_URL = "http://localhost:8000"
 schema_view = get_schema_view(
     openapi.Info(
         title="PDF Image Analyzer API",
@@ -22,14 +22,13 @@ schema_view = get_schema_view(
         ),
         license=openapi.License(name="MIT License"),
     ),
-    public=False,  # internal only
-    permission_classes=(
-        # permissions.IsAuthenticated,
-    ),  # uses your InternalServiceJWTAuthentication
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+    url=f"{SWAGGER_BASE_URL}/api/v1",
 )
 
 
-def healthz(_request):
+def health(_request):
     """Lightweight health check for ALB/ECS/Compose."""
     return JsonResponse({"ok": True, "service": "pdf_image_analyzer_backend"})
 
@@ -38,11 +37,12 @@ urlpatterns = [
     # Admin (customizable via settings.ADMIN_URL)
     path(getattr(settings, "ADMIN_URL", "admin/"), admin.site.urls),
     # Health check (compose & ALB reference this)
-    path("healthz", healthz, name="healthz"),
+    path("health", health, name="health"),
     # API v1
     path("api/v1/file-upload/", include("apps.file_upload.urls")),
     path("api/v1/jobs/", include("apps.jobs.urls")),
     path("api/v1/analytics/", include("apps.analytics.urls")),
+    path("api/v1/core/", include("apps.core.urls")),
     # OpenAPI schema for Orval (JSON/YAML) — always available internally
     re_path(
         r"^swagger(?P<format>\.json|\.yaml)$",
@@ -55,11 +55,13 @@ urlpatterns = [
 if settings.DEBUG or getattr(settings, "ENABLE_API_DOCS", False):
     urlpatterns += [
         path(
-            "docs/",
+            "api/v1/docs/",
             schema_view.with_ui("swagger", cache_timeout=0),
             name="schema-swagger-ui",
         ),
         path(
-            "redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
+            "api/v1/redoc/",
+            schema_view.with_ui("redoc", cache_timeout=0),
+            name="schema-redoc",
         ),
     ]

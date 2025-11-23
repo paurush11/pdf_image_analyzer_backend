@@ -1,7 +1,9 @@
-from django.urls import include, path
+from django.urls import path
+from apps.file_upload.viewsets.upload_viewset import UploadViewSet
 
-app_name = "file_upload"
-
+v = UploadViewSet.as_view
 urlpatterns = [
-    path("", include("apps.file_upload.interfaces.django.urls")),
+    path("upload/plan", v({"post": "plan"}), name="upload-plan"),
+    path("upload/complete", v({"post": "complete"}), name="upload-complete"),
+    path("download/presign", v({"post": "presign_download"}), name="download-presign"),
 ]

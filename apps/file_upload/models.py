@@ -1,3 +1,1 @@
-from .infrastructure.orm.models.file import *
-
-__all__ = ["File"]
+from apps.file_upload.models.file import *

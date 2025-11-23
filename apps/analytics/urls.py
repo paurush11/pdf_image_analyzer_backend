@@ -1,10 +1,15 @@
-from django.urls import include, path
+"""URL configuration for analytics app."""
 
-app_name = "analytics"
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
+from apps.analytics.viewsets.analytics_viewset import (
+    AnalyticsViewSet,
+)
+
+router = DefaultRouter()
+router.register(r"", AnalyticsViewSet, basename="analytics")
 
 urlpatterns = [
-    path("", include("apps.analytics.interfaces.django.urls")),
+    path("", include(router.urls)),
 ]
-from apps.analytics.interfaces.django.urls import urlpatterns
-
-app_name = "analytics"

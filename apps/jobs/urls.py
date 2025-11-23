@@ -1,10 +1,13 @@
-from django.urls import include, path
+"""URL configuration for jobs app."""
 
-app_name = "jobs"
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
+from apps.jobs.viewsets.job_viewset import JobViewSet
+
+router = DefaultRouter()
+router.register(r"", JobViewSet, basename="jobs")
 
 urlpatterns = [
-    path("", include("apps.jobs.interfaces.django.urls")),
+    path("", include(router.urls)),
 ]
-from apps.jobs.interfaces.django.urls import urlpatterns
-
-app_name = "jobs"
